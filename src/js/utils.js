@@ -2,7 +2,6 @@ import { CFG, db, analytics } from './config.js';
 import { getDoc, doc, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { logEvent } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 import { UI } from './ui.js';
-import { Bens } from './bens.js';
 
 export async function uploadImage(file) {
   const fd = new FormData();
@@ -180,6 +179,7 @@ export const Detail = {
             </div>
           </div>
 
+          <!-- NOVA SEÇÃO DE HISTÓRICO -->
           <div class="detail-section" style="margin-top: 32px;">
             <p class="detail-section__title">Histórico de Alterações</p>
             ${historico.length > 0 ? `<div class="timeline">${histHtml}</div>` : `<p style="font-size:13px; color:var(--c-text-3)">Nenhuma alteração registrada.</p>`}
@@ -223,20 +223,38 @@ export const PublicView = {
     const page = document.getElementById('public-view-page');
     const card = document.getElementById('public-bem-card');
     page.classList.remove('hidden');
-    card.innerHTML = `<div class="empty-state"><p style="color:var(--c-text)">Carregando ficha...</p></div>`;
+    card.innerHTML = `<div class="empty-state"><p style="color:var(--c-text)">Carregando ficha do patrimônio...</p></div>`;
 
     try {
-      const snap = await getDoc(doc(db, `artifacts/${CFG.appId}/users/${userId}/patrimonios`, bemId));
+      const docRef = doc(db, `artifacts/${CFG.appId}/users/${userId}/patrimonios`, bemId);
+      const snap = await getDoc(docRef);
+      
       if (snap.exists()) {
         const bemData = snap.data();
-        const historico = await Bens.getHistorico(userId, bemId);
-        card.innerHTML = Detail.buildHTML(bemData, historico, false, true);
-        new QRCode(document.getElementById('qrcode-view'), { text: location.href, width: 120, height: 120 });
+        const historico = bemData.historico || [];
+        
+        // Renderiza a ficha (Enviando isPdf=false e isPublic=true)
+        card.innerHTML = Detail.buildHTML(bemData, historico, false, true, bemId);
+        
+        // Renderiza o QR Code novamente para a visualização pública
+        const qrContainer = document.getElementById('qrcode-view');
+        if(qrContainer) {
+          qrContainer.innerHTML = '';
+          new QRCode(qrContainer, { text: location.href, width: 120, height: 120 });
+        }
       } else {
-        card.innerHTML = `<div class="empty-state"><div class="empty-state__icon"><i class="fas fa-ban"></i></div><p class="empty-state__title">Ficha não encontrada</p></div>`;
+        card.innerHTML = `<div class="empty-state"><div class="empty-state__icon"><i class="fas fa-ban"></i></div><p class="empty-state__title">Ficha não encontrada</p><p class="empty-state__desc">Este bem não existe ou foi excluído.</p></div>`;
       }
-    } catch {
-      card.innerHTML = `<div class="empty-state"><p class="empty-state__title">Erro ao carregar dados.</p></div>`;
+    } catch (err) {
+      console.error("Erro na página pública:", err);
+      // Se der erro de permissão ou qualquer outro, agora vai mostrar na tela com detalhes
+      card.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state__icon" style="color: var(--c-danger);"><i class="fas fa-exclamation-triangle"></i></div>
+          <p class="empty-state__title">Erro ao carregar dados</p>
+          <p class="empty-state__desc">Não foi possível carregar os detalhes deste patrimônio.</p>
+          <code style="margin-top:16px; font-size:11px; background:#f0f0f0; padding:8px; border-radius:4px; color:#d93025; word-break: break-all;">${err.message}</code>
+        </div>`;
     }
   }
 };
