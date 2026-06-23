@@ -1,5 +1,5 @@
 import { CFG, db, analytics } from './config.js';
-import { collection, addDoc, doc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+import { collection, addDoc, doc, updateDoc, deleteDoc, onSnapshot, Timestamp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { logEvent } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 import { State } from './state.js';
 import { UI } from './ui.js';
@@ -27,8 +27,44 @@ export const Bens = {
   async add(data) {
     const ref = Bens._collRef();
     if (!ref) throw new Error('Não autenticado.');
-    await addDoc(ref, { ...data, criadoPor: State.currentUser.uid, criadoEm: Timestamp.fromDate(new Date()) });
+    // Cria o bem já com um array de histórico vazio
+    await addDoc(ref, { ...data, historico: [], criadoPor: State.currentUser.uid, criadoEm: Timestamp.fromDate(new Date()) });
     logEvent(analytics, 'add_bem', { setor: data.setor, valor: data.valor });
+  },
+
+  async update(id, newData, motivo) {
+    const ref = doc(db, `artifacts/${CFG.appId}/users/${State.currentUser.uid}/patrimonios`, id);
+    const oldData = State.currentBens.find(b => b.id === id);
+    
+    // Resgata o histórico antigo do próprio documento
+    const historicoAtual = oldData.historico || [];
+    
+    // Calcula diferenças
+    const diffs = [];
+    const fieldsToTrack = ['orgao', 'setor', 'codigoBem', 'descricao', 'valor', 'estadoConservacao', 'ocioso', 'observacoes'];
+    
+    fieldsToTrack.forEach(f => {
+      if (String(newData[f] || '') !== String(oldData[f] || '')) {
+        diffs.push({ campo: f, de: String(oldData[f] || 'Vazio'), para: String(newData[f] || 'Vazio') });
+      }
+    });
+
+    // Se houve mudança, injetamos no início do array de histórico
+    if (diffs.length > 0 || motivo) {
+      historicoAtual.unshift({
+        data: Timestamp.fromDate(new Date()),
+        usuarioNome: State.currentUser.displayName || State.currentUser.email || 'Usuário',
+        alteracoes: diffs,
+        motivo: motivo || 'Atualização cadastral'
+      });
+    }
+
+    // Salva TUDO de uma vez só no documento original (Não exige permissão extra)
+    await updateDoc(ref, { 
+      ...newData, 
+      historico: historicoAtual,
+      atualizadoEm: Timestamp.fromDate(new Date()) 
+    });
   },
 
   async remove(id) {
@@ -83,14 +119,7 @@ export const Bens = {
     if (nextBtn) nextBtn.disabled = State.currentPage >= totalPages;
 
     if (slice.length === 0) {
-      tbody.innerHTML = `
-        <tr><td colspan="7">
-          <div class="empty-state">
-            <div class="empty-state__icon"><i class="fas fa-inbox"></i></div>
-            <p class="empty-state__title">Nenhum bem encontrado</p>
-            <p class="empty-state__desc">Ajuste os filtros ou adicione um novo bem.</p>
-          </div>
-        </td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-state__icon"><i class="fas fa-inbox"></i></div><p class="empty-state__title">Nenhum bem encontrado</p></div></td></tr>`;
       return;
     }
 
@@ -109,25 +138,22 @@ export const Bens = {
           </div>
         </td>
         <td>
-          <span class="badge ${bem.ocioso ? 'badge--idle' : 'badge--active'}">
-            ${bem.ocioso ? 'Ocioso' : 'Em uso'}
-          </span>
+          <span class="badge ${bem.ocioso ? 'badge--idle' : 'badge--active'}">${bem.ocioso ? 'Ocioso' : 'Em uso'}</span>
         </td>
         <td>
           <div class="row-actions">
             <button class="action-btn action-btn--view" data-id="${bem.id}" title="Visualizar ficha"><i class="fas fa-eye"></i></button>
+            <button class="action-btn action-btn--edit" data-id="${bem.id}" title="Editar bem"><i class="fas fa-pen"></i></button>
             <button class="action-btn action-btn--pdf"  data-id="${bem.id}" title="Gerar PDF"><i class="fas fa-file-pdf"></i></button>
             <button class="action-btn action-btn--delete" data-id="${bem.id}" title="Excluir"><i class="fas fa-trash"></i></button>
           </div>
         </td>
       </tr>`).join('');
 
-    tbody.querySelectorAll('.action-btn--view').forEach(btn =>
-      btn.addEventListener('click', e => BemModal.view(e.currentTarget.dataset.id)));
-    tbody.querySelectorAll('.action-btn--pdf').forEach(btn =>
-      btn.addEventListener('click', e => PDF.generate(e.currentTarget.dataset.id)));
-    tbody.querySelectorAll('.action-btn--delete').forEach(btn =>
-      btn.addEventListener('click', e => Bens.confirmDelete(e.currentTarget.dataset.id)));
+    tbody.querySelectorAll('.action-btn--view').forEach(btn => btn.addEventListener('click', e => BemModal.view(e.currentTarget.dataset.id)));
+    tbody.querySelectorAll('.action-btn--edit').forEach(btn => btn.addEventListener('click', e => BemModal.edit(e.currentTarget.dataset.id)));
+    tbody.querySelectorAll('.action-btn--pdf').forEach(btn => btn.addEventListener('click', e => PDF.generate(e.currentTarget.dataset.id)));
+    tbody.querySelectorAll('.action-btn--delete').forEach(btn => btn.addEventListener('click', e => Bens.confirmDelete(e.currentTarget.dataset.id)));
   },
 
   async confirmDelete(id) {

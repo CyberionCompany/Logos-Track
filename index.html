@@ -4,9 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>LogosTrack – Gestão de Patrimônio</title>
-  
   <link rel="icon" href="data:,">
-  
   <meta name="theme-color" content="#4F46E5">
   <meta name="description" content="Sistema de gestão patrimonial com rastreamento por QR Code, depreciação automática e relatórios.">
 
@@ -21,6 +19,8 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 </head>
 <body>
+
+<div id="print-area"></div>
 
 <div id="public-view-page" class="hidden" style="min-height:100vh;display:flex;align-items:flex-start;justify-content:center;padding:32px 16px;background:var(--c-bg);">
   <div id="public-bem-card" style="width:100%;max-width:780px;"></div>
@@ -37,59 +37,30 @@
       <p id="auth-subtitle" class="auth-panel__sub">Bem-vindo de volta! Insira seus dados para continuar.</p>
 
       <form id="login-form">
-        <div class="field">
-          <label for="login-email">Email</label>
-          <input id="login-email" type="email" placeholder="voce@email.com" required>
-        </div>
-        <div class="field">
-          <label for="login-password">Senha</label>
-          <input id="login-password" type="password" placeholder="••••••••" required>
-        </div>
+        <div class="field"><label for="login-email">Email</label><input id="login-email" type="email" placeholder="voce@email.com" required></div>
+        <div class="field"><label for="login-password">Senha</label><input id="login-password" type="password" placeholder="••••••••" required></div>
         <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">Entrar</button>
       </form>
 
       <form id="register-form" class="hidden">
-        <div class="field">
-          <label for="register-name">Nome completo</label>
-          <input id="register-name" type="text" placeholder="Seu nome" required>
-        </div>
-        <div class="field">
-          <label for="register-email">Email</label>
-          <input id="register-email" type="email" placeholder="voce@email.com" required>
-        </div>
-        <div class="field">
-          <label for="register-password">Senha</label>
-          <input id="register-password" type="password" placeholder="Mín. 6 caracteres" minlength="6" required>
-        </div>
+        <div class="field"><label for="register-name">Nome completo</label><input id="register-name" type="text" placeholder="Seu nome" required></div>
+        <div class="field"><label for="register-email">Email</label><input id="register-email" type="email" placeholder="voce@email.com" required></div>
+        <div class="field"><label for="register-password">Senha</label><input id="register-password" type="password" placeholder="Mín. 6 caracteres" minlength="6" required></div>
         <button type="submit" class="btn btn-primary btn-full btn-lg" style="margin-top:8px;">Criar conta</button>
       </form>
 
       <div class="divider"><span>ou acesse com</span></div>
 
       <div style="display: flex; flex-direction: column; gap: 8px;">
-        <button id="google-signin-button" type="button" class="btn-google btn">
-          <svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M47.532 24.555C47.532 22.92 47.387 21.285 47.097 19.725H24.21V28.71H37.305C36.687 31.845 34.608 34.47 31.638 36.39V42.345H39.885C44.602 37.98 47.532 31.845 47.532 24.555Z" fill="#4285F4"/><path d="M24.21 48C30.69 48 36.12 45.81 39.885 42.345L31.638 36.39C29.34 37.98 26.91 38.88 24.21 38.88C18.99 38.88 14.49 35.37 12.87 30.495L4.41 30.495V36.66C8.175 43.56 15.615 48 24.21 48Z" fill="#34A853"/><path d="M12.87 30.495C12.33 28.98 12.042 27.345 12.042 25.65C12.042 23.955 12.33 22.32 12.87 20.805V14.64L4.41 14.64C1.59 20.16 0 26.64 0 33.345C0 40.05 1.59 46.53 4.41 52.05L12.87 45.885C12.33 44.37 12.042 42.735 12.042 41.04C12.042 39.345 12.33 37.71 12.87 36.195" fill="#FBBC05"/><path d="M24.21 9.42C27.45 9.42 30.33 10.53 32.52 12.63L40.155 5.01C36.12 1.59 30.69 0 24.21 0C15.615 0 8.175 4.44 4.41 11.34L12.87 17.505C14.49 12.63 18.99 9.42 24.21 9.42Z" fill="#EA4335"/></svg>
-          Entrar com Google
-        </button>
-        <button id="ms-signin-button" type="button" class="btn-google btn">
-          <svg width="18" height="18" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path fill="#f35325" d="M1 1h9v9H1z"/><path fill="#81bc06" d="M11 1h9v9h-9z"/><path fill="#05a6f0" d="M1 11h9v9H1z"/><path fill="#ffba08" d="M11 11h9v9h-9z"/></svg>
-          Entrar com Microsoft
-        </button>
-        <button id="github-signin-button" type="button" class="btn-google btn">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          Entrar com GitHub
-        </button>
+        <button id="google-signin-button" type="button" class="btn-google btn"><svg width="18" height="18" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path d="M47.532 24.555C47.532 22.92 47.387 21.285 47.097 19.725H24.21V28.71H37.305C36.687 31.845 34.608 34.47 31.638 36.39V42.345H39.885C44.602 37.98 47.532 31.845 47.532 24.555Z" fill="#4285F4"/><path d="M24.21 48C30.69 48 36.12 45.81 39.885 42.345L31.638 36.39C29.34 37.98 26.91 38.88 24.21 38.88C18.99 38.88 14.49 35.37 12.87 30.495L4.41 30.495V36.66C8.175 43.56 15.615 48 24.21 48Z" fill="#34A853"/><path d="M12.87 30.495C12.33 28.98 12.042 27.345 12.042 25.65C12.042 23.955 12.33 22.32 12.87 20.805V14.64L4.41 14.64C1.59 20.16 0 26.64 0 33.345C0 40.05 1.59 46.53 4.41 52.05L12.87 45.885C12.33 44.37 12.042 42.735 12.042 41.04C12.042 39.345 12.33 37.71 12.87 36.195" fill="#FBBC05"/><path d="M24.21 9.42C27.45 9.42 30.33 10.53 32.52 12.63L40.155 5.01C36.12 1.59 30.69 0 24.21 0C15.615 0 8.175 4.44 4.41 11.34L12.87 17.505C14.49 12.63 18.99 9.42 24.21 9.42Z" fill="#EA4335"/></svg>Entrar com Google</button>
+        <button id="ms-signin-button" type="button" class="btn-google btn"><svg width="18" height="18" viewBox="0 0 21 21" xmlns="http://www.w3.org/2000/svg" style="flex-shrink:0"><path fill="#f35325" d="M1 1h9v9H1z"/><path fill="#81bc06" d="M11 1h9v9h-9z"/><path fill="#05a6f0" d="M1 11h9v9H1z"/><path fill="#ffba08" d="M11 11h9v9h-9z"/></svg>Entrar com Microsoft</button>
+        <button id="github-signin-button" type="button" class="btn-google btn"><svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" style="flex-shrink:0"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>Entrar com GitHub</button>
       </div>
 
       <p id="auth-error" class="auth-error"></p>
       <div class="auth-toggle"><a href="#" id="toggle-auth-mode">Não tem conta? Cadastre-se</a></div>
     </div>
-    <div class="auth-bg">
-      <div class="auth-bg__content">
-        <p class="auth-bg__title">Gestão patrimonial que funciona de verdade.</p>
-        <p class="auth-bg__desc">Rastreamento por QR Code, depreciação automática e relatórios em PDF. Tudo em um lugar.</p>
-      </div>
-    </div>
+    <div class="auth-bg"><div class="auth-bg__content"><p class="auth-bg__title">Gestão patrimonial que funciona de verdade.</p><p class="auth-bg__desc">Rastreamento por QR Code, depreciação automática e relatórios em PDF.</p></div></div>
   </div>
 
   <div id="main-content" class="hidden">
@@ -97,10 +68,7 @@
 
     <aside id="sidebar" class="sidebar">
       <div class="sidebar__top">
-        <div class="sidebar__logo">
-          <div class="sidebar__logo-icon"><i class="fas fa-barcode"></i></div>
-          <span class="sidebar__logo-name">LogosTrack</span>
-        </div>
+        <div class="sidebar__logo"><div class="sidebar__logo-icon"><i class="fas fa-barcode"></i></div><span class="sidebar__logo-name">LogosTrack</span></div>
         <button id="sidebar-collapse" class="sidebar__collapse-btn" title="Recolher menu"><i class="fas fa-chevron-left"></i></button>
       </div>
 
@@ -118,10 +86,7 @@
       <div class="sidebar__bottom">
         <div class="user-row">
           <div class="user-row__avatar" id="sidebar-avatar">–</div>
-          <div class="user-row__info">
-            <p class="user-row__name" id="sidebar-username">Usuário</p>
-            <p class="user-row__email" id="sidebar-email">—</p>
-          </div>
+          <div class="user-row__info"><p class="user-row__name" id="sidebar-username">Usuário</p><p class="user-row__email" id="sidebar-email">—</p></div>
         </div>
         <button id="logout-button" class="nav-item" style="color:var(--c-danger);width:100%;margin-top:4px;"><span class="nav-item__icon"><i class="fas fa-sign-out-alt"></i></span><span class="nav-item__label">Sair</span></button>
       </div>
@@ -129,23 +94,13 @@
 
     <div class="main-wrapper">
       <header class="topbar">
-        <div class="topbar__left">
-          <button id="mobile-menu-btn" class="mobile-menu-btn" aria-label="Abrir menu"><i class="fas fa-bars"></i></button>
-          <span id="topbar-title" class="topbar__breadcrumb">Dashboard</span>
-        </div>
-        <div class="topbar__right">
-          <button id="theme-toggle" class="theme-btn" title="Alternar tema"><i class="fas fa-moon"></i></button>
-        </div>
+        <div class="topbar__left"><button id="mobile-menu-btn" class="mobile-menu-btn"><i class="fas fa-bars"></i></button><span id="topbar-title" class="topbar__breadcrumb">Dashboard</span></div>
+        <div class="topbar__right"><button id="theme-toggle" class="theme-btn" title="Alternar tema"><i class="fas fa-moon"></i></button></div>
       </header>
 
       <main class="page-content">
         <section id="dashboard-section" class="fade-in">
-          <div class="page-header">
-            <div class="page-header__text">
-              <h2 class="page-header__title">Dashboard</h2>
-              <p class="page-header__sub">Visão geral do seu patrimônio</p>
-            </div>
-          </div>
+          <div class="page-header"><div class="page-header__text"><h2 class="page-header__title">Dashboard</h2><p class="page-header__sub">Visão geral do seu patrimônio</p></div></div>
           <div class="stats-grid">
             <div class="stat-card stat-card--accent"><p class="stat-card__eyebrow">Valor Total</p><p class="stat-card__value" id="valor-total" title="Valor Total">R$ 0</p><div class="stat-card__icon"><i class="fas fa-circle-dollar-to-slot"></i></div><div class="stat-card__accent-bar"></div></div>
             <div class="stat-card stat-card--danger"><p class="stat-card__eyebrow">Valor em Risco</p><p class="stat-card__value" id="valor-risco" title="Valor em Risco">R$ 0</p><div class="stat-card__icon"><i class="fas fa-triangle-exclamation"></i></div><div class="stat-card__accent-bar"></div></div>
@@ -207,6 +162,8 @@
     <div class="modal__body">
       <form id="add-bem-form">
         <input type="hidden" id="bem-id">
+        <input type="hidden" id="bem-foto-existente">
+        
         <p class="form-section__title" style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:var(--c-text-3);margin-bottom:14px;">Identificação</p>
         <div class="form-grid form-grid--2">
           <div class="field"><label for="bem-orgao">Órgão</label><input id="bem-orgao" type="text" placeholder="Ex: Secretaria Municipal" required></div>
@@ -251,12 +208,21 @@
             <input type="file" id="bem-foto" accept="image/*" capture="environment">
             <label class="file-field__label" for="bem-foto">
               <div class="file-field__icon"><i class="fas fa-camera"></i></div>
-              <p class="file-field__text"><strong>Clique para tirar foto</strong> ou arraste aqui</p>
+              <p class="file-field__text"><strong>Clique para alterar foto</strong> ou arraste aqui</p>
               <p style="font-size:11px;color:var(--c-text-3);margin-top:4px;">JPG, PNG, WEBP — max 10 MB</p>
             </label>
           </div>
           <img id="photo-preview" class="hidden" alt="Pré-visualização">
         </div>
+
+        <div id="motivo-alteracao-container" class="form-section hidden">
+          <p class="form-section__title" style="color:var(--c-warn)">Motivo da Alteração (Histórico)</p>
+          <div class="field">
+            <label for="bem-motivo-alteracao">Justificativa para as mudanças *</label>
+            <input type="text" id="bem-motivo-alteracao" placeholder="Ex: Transferência de setor, manutenção, etc.">
+          </div>
+        </div>
+
         <p id="add-bem-error" style="font-size:13px;color:var(--c-danger);min-height:18px;margin-top:8px;"></p>
       </form>
     </div>
@@ -278,6 +244,5 @@
 <div id="toast-notification" class="toast--error hidden opacity-0"><i class="fas fa-circle-check" id="toast-icon"></i><p id="toast-message"></p></div>
 
 <script type="module" src="src/js/main.js"></script>
-
 </body>
 </html>

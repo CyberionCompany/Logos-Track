@@ -422,3 +422,127 @@ tbody tr:last-child td { border-bottom: none; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; }
 .method-tag { font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: var(--r-full); background: var(--c-accent-lt); color: var(--c-accent); }
 #photo-preview { border-radius: var(--r-md); border: 1px solid var(--c-border); max-height: 140px; width: auto; object-fit: cover; margin-top: var(--sp-3); }
+
+/* ... TODO O SEU CSS ANTERIOR ... */
+
+/* ── Timeline de Histórico ── */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sp-4);
+  padding-left: 12px;
+  border-left: 2px solid var(--c-border);
+  margin-top: var(--sp-4);
+}
+
+.timeline-item {
+  position: relative;
+  padding-left: var(--sp-4);
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -21px; /* Centraliza sobre a borda */
+  top: 4px;
+  width: 12px; height: 12px;
+  border-radius: 50%;
+  background: var(--c-surface);
+  border: 3px solid var(--c-accent);
+}
+
+.timeline-date {
+  font-size: 11px;
+  color: var(--c-text-3);
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.timeline-user {
+  font-size: 13px;
+  color: var(--c-text);
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+
+.timeline-reason {
+  font-size: 13px;
+  color: var(--c-text-2);
+  margin-bottom: 8px;
+}
+
+.timeline-diffs {
+  background: var(--c-bg);
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-sm);
+  padding: var(--sp-2) var(--sp-3);
+  font-size: 12px;
+}
+
+.timeline-diff {
+  display: flex;
+  align-items: center;
+  gap: var(--sp-2);
+  margin-bottom: 4px;
+}
+.timeline-diff:last-child { margin-bottom: 0; }
+.diff-field { font-weight: 700; color: var(--c-text); text-transform: capitalize; }
+.diff-old { text-decoration: line-through; color: var(--c-danger); }
+.diff-new { color: var(--c-success); font-weight: 600; }
+
+/* ── Impressão de Etiqueta QR Code ── */
+#print-area { display: none; }
+
+@media print {
+  body * { visibility: hidden; }
+  
+  /* Esconde modais, background, etc */
+  #app-root, .modal-overlay, #toast-notification { display: none !important; }
+  
+  #print-area, #print-area * {
+    visibility: visible;
+  }
+  
+  #print-area {
+    display: block !important;
+    position: absolute;
+    left: 0; top: 0;
+    width: 100%;
+    margin: 0; padding: 0;
+  }
+  
+  .print-label {
+    width: 50mm; /* Tamanho padrão de etiqueta */
+    height: auto;
+    padding: 4mm;
+    border: 1px solid #000;
+    box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    font-family: Arial, sans-serif;
+    color: #000;
+  }
+
+  .print-label-qr img {
+    width: 35mm;
+    height: 35mm;
+    margin-bottom: 2mm;
+  }
+
+  .print-label-info h2 {
+    font-size: 12pt;
+    margin: 0 0 1mm 0;
+    font-weight: bold;
+  }
+
+  .print-label-info p {
+    font-size: 8pt;
+    margin: 0;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}

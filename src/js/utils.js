@@ -2,6 +2,7 @@ import { CFG, db, analytics } from './config.js';
 import { getDoc, doc, getDocs, collection } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 import { logEvent } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-analytics.js";
 import { UI } from './ui.js';
+import { Bens } from './bens.js';
 
 export async function uploadImage(file) {
   const fd = new FormData();
@@ -25,7 +26,6 @@ export const Depreciation = {
     }
 
     let rows = [];
-
     switch (bem.metodoDepreciacao) {
       case 'soma_digitos': {
         const soma = (vidaUtil * (vidaUtil + 1)) / 2;
@@ -82,7 +82,7 @@ export const Depreciation = {
 };
 
 export const Detail = {
-  buildHTML(bem, isPdf = false, isPublic = false, bemId = '') {
+  buildHTML(bem, historico = [], isPdf = false, isPublic = false, bemId = '') {
     const fmt  = v => (v || 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
     const dtAqui = bem.criadoEm?.toDate ? bem.criadoEm.toDate() : new Date();
     const { rows, depreciacaoAnoCorrente, valorContabilAtual } = Depreciation.calculate(bem);
@@ -101,6 +101,29 @@ export const Detail = {
 
     const closeBtn = (!isPdf && !isPublic)
       ? `<button id="close-view-modal" class="btn btn-ghost btn-icon" style="font-size:20px;">&times;</button>` : '';
+      
+    const printBtn = (!isPdf && !isPublic)
+      ? `<button id="print-label-btn" class="btn btn-secondary btn-sm"><i class="fas fa-print"></i> Etiqueta</button>` : '';
+
+    // HTML do Histórico
+    const histHtml = historico.map(h => {
+      const date = h.data?.toDate ? h.data.toDate().toLocaleString('pt-BR') : 'Data desconhecida';
+      const diffs = (h.alteracoes || []).map(d => `
+        <div class="timeline-diff">
+          <span class="diff-field">${d.campo}:</span>
+          <span class="diff-old">${d.de || 'Vazio'}</span> <i class="fas fa-arrow-right" style="font-size:10px;color:var(--c-text-3)"></i> <span class="diff-new">${d.para || 'Vazio'}</span>
+        </div>
+      `).join('');
+      
+      return `
+        <div class="timeline-item">
+          <p class="timeline-date">${date}</p>
+          <p class="timeline-user"><i class="fas fa-user-edit" style="margin-right:4px;"></i> ${h.usuarioNome}</p>
+          <p class="timeline-reason">Motivo: ${h.motivo}</p>
+          ${diffs ? `<div class="timeline-diffs">${diffs}</div>` : ''}
+        </div>
+      `;
+    }).join('');
 
     return `
       <div class="detail-card fade-in" id="pdf-content">
@@ -110,6 +133,7 @@ export const Detail = {
             <span class="detail-header__brand-name">LogosTrack</span>
           </div>
           <div style="display:flex;align-items:center;gap:12px;">
+            ${printBtn}
             <span class="badge ${bem.ocioso ? 'badge--idle' : 'badge--active'}" style="font-size:13px;">
               ${bem.ocioso ? 'Ocioso' : 'Em uso'}
             </span>
@@ -143,12 +167,6 @@ export const Detail = {
               <div class="depr-box depr-box--highlight"><p class="depr-box__label">Depreciação ${anoAtual}</p><p class="depr-box__value">${fmt(depreciacaoAnoCorrente)}</p></div>
               <div class="depr-box depr-box--success"><p class="depr-box__label">Valor Contábil Atual</p><p class="depr-box__value">${fmt(valorContabilAtual)}</p></div>
             </div>
-            <div class="depr-table-wrap">
-              <table>
-                <thead><tr><th>Período</th><th style="text-align:right">Depreciação no Ano</th><th style="text-align:right">Valor Contábil</th></tr></thead>
-                <tbody>${tabelaRows}</tbody>
-              </table>
-            </div>
           </div>
 
           <div class="detail-section">
@@ -161,6 +179,12 @@ export const Detail = {
               </div>
             </div>
           </div>
+
+          <div class="detail-section" style="margin-top: 32px;">
+            <p class="detail-section__title">Histórico de Alterações</p>
+            ${historico.length > 0 ? `<div class="timeline">${histHtml}</div>` : `<p style="font-size:13px; color:var(--c-text-3)">Nenhuma alteração registrada.</p>`}
+          </div>
+
         </div>
         <div style="padding:16px 32px;border-top:1px solid var(--c-border);">
           <p style="font-size:12px;color:var(--c-text-3);">Ficha gerada em ${new Date().toLocaleString('pt-BR')} · LogosTrack</p>
@@ -205,7 +229,8 @@ export const PublicView = {
       const snap = await getDoc(doc(db, `artifacts/${CFG.appId}/users/${userId}/patrimonios`, bemId));
       if (snap.exists()) {
         const bemData = snap.data();
-        card.innerHTML = Detail.buildHTML(bemData, false, true);
+        const historico = await Bens.getHistorico(userId, bemId);
+        card.innerHTML = Detail.buildHTML(bemData, historico, false, true);
         new QRCode(document.getElementById('qrcode-view'), { text: location.href, width: 120, height: 120 });
       } else {
         card.innerHTML = `<div class="empty-state"><div class="empty-state__icon"><i class="fas fa-ban"></i></div><p class="empty-state__title">Ficha não encontrada</p></div>`;
