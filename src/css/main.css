@@ -140,15 +140,14 @@ input, select, textarea { font-family: var(--font); }
 
 /* Correção principal da sobreposição */
 .stat-card__value {
-  font-size: 24px; 
+  font-size: clamp(16px, 2.2vw, 24px);
   font-weight: 800;
   color: var(--c-text);
   letter-spacing: -0.5px;
   line-height: 1.2;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 75%; /* Garante que nunca encoste no ícone */
+  overflow: visible;
+  max-width: calc(100% - 56px); /* deixa espaço para o ícone */
 }
 
 .stat-card__icon {
@@ -297,7 +296,7 @@ tbody tr:hover td { background: var(--c-bg); cursor: pointer; }
 .page-header__title { font-size: 22px; font-weight: 700; color: var(--c-text); letter-spacing: -0.5px; }
 .page-header__sub { font-size: 14px; color: var(--c-text-3); margin-top: 2px; }
 .page-header__actions { display: flex; align-items: center; gap: var(--sp-3); flex-wrap: wrap; }
-.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-8); }
+.stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-8); }
 .charts-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: var(--sp-4); margin-bottom: var(--sp-8); }
 .chart-card__title { font-size: 14px; font-weight: 600; color: var(--c-text); margin-bottom: var(--sp-5); }
 .chart-card__canvas { position: relative; height: 260px; }
@@ -580,14 +579,14 @@ tbody tr:last-child td { border-bottom: none; }
 }
 
 .stat-card__value {
-  font-size: 24px; 
+  font-size: clamp(16px, 2.2vw, 24px);
   font-weight: 800;
   color: var(--c-text);
   letter-spacing: -0.5px;
   line-height: 1.2;
-  /* Se o número for absurdamente grande, ele quebra a linha em vez de vazar */
-  word-wrap: break-word;
-  white-space: pre-wrap; 
+  white-space: nowrap;
+  overflow: visible;
+  max-width: calc(100% - 56px); /* deixa espaço para o ícone */
 }
 
 .stat-card__icon {
